@@ -1,45 +1,148 @@
 import pandas as pd
 import numpy as np
 
-def count_missing_values(df):
-    # Counting missing values in each column
-    missing_values = df.isnull().sum()
-    print("Missing values in each column:")
-    print(missing_values)
 
-def cleaning(df):
-    # Handling missing values
-    df = df.dropna()
+def cleaned_data(df):
 
-    # Converting data types
-    df[["bore"]] = df[["bore"]].astype("float")
-    df[["normalized-losses"]] = df[["normalized-losses"]].astype("float")
-    df[["price"]] = df[["price"]].astype("float")
-    df[["peak-rpm"]] = df[["peak-rpm"]].astype("float")
-    df[["stroke"]]=df[["stroke"]].astype("float")
-    df[["horsepower"]]=df[["horsepower"]].astype("float")
+    print("Missing Values:")
+    print(df.isnull().sum())
 
-    #replacing nan values with mean
-    df["normalized-losses"].replace(np.nan, df["normalized-losses"].mean(), inplace=True)
-    df["bore"].replace(np.nan,np.mean(df["bore"]),inplace=True)
-    df["stroke"].replace(np.nan, np.mean(df["stroke"]), inplace=True)
-    df["horsepower"].replace(np.nan, np.mean(df["horsepower"]), inplace=True)
-    df["peak-rpm"].replace(np.nan, np.mean(df["peak-rpm"]), inplace=True)
-    df["price"].replace(np.nan, np.mean(df["price"]), inplace=True)
-    df["num-of-doors"].replace(np.nan, "four", inplace=True)
-    df["num-of-doors"].replace(np.nan, df["num-of-doors"].value_counts().idxmax(), inplace=True)
-    df["num-of-doors"].replace(np.nan, df["num-of-doors"].mode()[0], inplace=True)
+    # Replace ? with NaN
+    df.replace("?", np.nan, inplace=True)
 
-    #printing the cleaned dataset
-    print("Cleaned dataset:")
-    print(df.head(5))
+    # Convert required columns to numeric
+    cols = [
+        "bore",
+        "normalized-losses",
+        "price",
+        "peak-rpm",
+        "stroke",
+        "horsepower",
+        "wheel-base",
+        "width",
+        "length",
+        "height",
+        "curb-weight",
+        "engine-size",
+        "city-mpg",
+        "highway-mpg"
+    ]
 
-    #showing missing values after cleaning of entire dataset
-    print("Missing values after cleaning:") 
+    for col in cols:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    # Fill missing values
+
+    df["normalized-losses"] = df["normalized-losses"].fillna(
+        df["normalized-losses"].mean()
+    )
+
+    df["bore"] = df["bore"].fillna(
+        df["bore"].mean()
+    )
+
+    df["stroke"] = df["stroke"].fillna(
+        df["stroke"].mean()
+    )
+
+    df["horsepower"] = df["horsepower"].fillna(
+        df["horsepower"].mean()
+    )
+
+    df["peak-rpm"] = df["peak-rpm"].fillna(
+        df["peak-rpm"].mean()
+    )
+
+    df["price"] = df["price"].fillna(
+        df["price"].mean()
+    )
+
+    df["num-of-doors"] = df["num-of-doors"].fillna(
+        df["num-of-doors"].mode()[0]
+    )
+
+    # Fuel Consumption Features
+
+    df["city-L/100km"] = 235 / df["city-mpg"]
+
+    df["highway-L/100km"] = 235 / df["highway-mpg"]
+
+    # Feature Engineering
+
+    df["power-to-weight ratio"] = (
+        df["horsepower"] / df["curb-weight"]
+    )
+
+    df["engine-size-to-weight ratio"] = (
+        df["engine-size"] / df["curb-weight"]
+    )
+
+    df["length-to-width ratio"] = (
+        df["length"] / df["width"]
+    )
+
+    df["height-to-width ratio"] = (
+        df["height"] / df["width"]
+    )
+
+    df["wheel-base-to-length ratio"] = (
+        df["wheel-base"] / df["length"]
+    )
+
+    df["engine-size-to-wheelbase ratio"] = (
+        df["engine-size"] / df["wheel-base"]
+    )
+
+    df["horsepower-to-engine size ratio"] = (
+        df["horsepower"] / df["engine-size"]
+    )
+
+    # Drop old MPG columns
+
+    df.drop(
+        ["city-mpg", "highway-mpg"],
+        axis=1,
+        inplace=True
+    )
+
+    # One-Hot Encoding
+
+    dummy_variable_1 = pd.get_dummies(
+        df["fuel-type"],
+        prefix="fuel_type"
+    )
+
+    df = pd.concat(
+        [df, dummy_variable_1],
+        axis=1
+    )
+
+    df.drop(
+        "fuel-type",
+        axis=1,
+        inplace=True
+    )
+
+    # Reset Index
+
+    df.reset_index(
+        drop=True,
+        inplace=True
+    )
+
+    print("\nFinal Dataset Shape:")
+    print(df.shape)
+
+    print("\nRemaining Missing Values:")
     print(df.isnull().sum().sum())
 
-    #reseting the index of the dataset
-    df.reset_index(drop=True, inplace=True)
+    # Save cleaned dataset
 
-    #saving the cleaned dataset to a new CSV file
-    df.to_csv(r'C:\Users\S8861822\Desktop\Car_prediction\cleaned_data.csv', index=False)
+    df.to_csv(
+        "cleaned_data.csv",
+        index=False
+    )
+
+    print("\nCleaned dataset saved successfully.")
+
+    return df
