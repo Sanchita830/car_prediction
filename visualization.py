@@ -1,22 +1,19 @@
-import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 
 def visualize(df):
 
-    print("Scatter Plot")
-
-    plt.figure(figsize=(8, 5))
+    fig, ax = plt.subplots(figsize=(8, 5))
 
     sns.scatterplot(
         x=df["city-L/100km"],
-        y=df["price"]
+        y=df["price"],
+        ax=ax
     )
 
-    plt.title("City-L/100km vs Price")
-    plt.xlabel("City-L/100km")
-    plt.ylabel("Price")
+    ax.set_title("City-L/100km vs Price")
+    ax.set_xlabel("City-L/100km")
+    ax.set_ylabel("Price")
 
-    plt.show()
-
+    return fig
